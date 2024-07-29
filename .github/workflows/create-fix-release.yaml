@@ -53,7 +53,7 @@ jobs:
       - name: Update tag
         run: |
           git tag --force v${{ env.RELEASE_VERSION }}
-          git push --tags
+          git push --force --tags
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Update CHANGELOG
