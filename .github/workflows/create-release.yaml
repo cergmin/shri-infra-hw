@@ -60,7 +60,7 @@ jobs:
       - name: Create branch
         run: |
           git checkout -b release/${{ env.RELEASE_VERSION }}
-          git push --set-upstream origin --tags
+          git push --set-upstream origin release/${{ env.RELEASE_VERSION }} --tags
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   create-docker-image:
