@@ -1,0 +1,118 @@
+name: Create Release
+run-name: Релиз ${{ github.run_number }} (запущено ${{ github.actor }})
+
+on: ['workflow_dispatch']
+
+env:
+  RELEASE_VERSION: ${{ github.run_number }}
+  IMAGE_NAME: cr.yandex/${{ vars.DOCKER_REGISTRY_ID }}/app
+
+jobs:
+  create-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Create issue
+        run: |
+          git fetch
+          node ./scripts/createIssue.mjs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+          DOCKER_REGISTRY_ID: ${{ vars.DOCKER_REGISTRY_ID }}
+          AUTHOR: ${{ github.actor }}
+  create-release-branch:
+    needs:
+      - create-issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Setup Git
+        run: |
+          git config --global user.email "ci@github.com"
+          git config --global user.name "CI Bot"
+      - name: Update CHANGELOG
+        run: |
+          git fetch
+          node ./scripts/updateChangelog.mjs
+          git add CHANGELOG.md
+          git commit -m "Update CHANGELOG for release v${{ env.RELEASE_VERSION }}"
+          git push
+        env:
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+          AUTHOR: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create new tag
+        run: |
+          git tag v${{ env.RELEASE_VERSION }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create branch
+        run: |
+          git checkout -b release/${{ env.RELEASE_VERSION }}
+          git push --set-upstream origin --tags
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  create-docker-image:
+    runs-on: ubuntu-latest
+    needs: create-release-branch
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: Auth Container Registry
+        run: |
+          docker login --username oauth --password ${{ secrets.DOCKER_OAUTH_TOKEN }} cr.yandex
+      - name: Build Docker image
+        run: |
+          docker build . -t ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }} ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}_latest
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}
+          docker push ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}_latest
+  lint:
+    needs: 
+      - create-release-branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+  test:
+    needs: 
+      - create-release-branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: Test
+        run: npm run test
