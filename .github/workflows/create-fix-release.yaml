@@ -1,14 +1,21 @@
-name: Create Release
-run-name: Релиз ${{ github.run_number }} (запущено ${{ github.actor }})
+name: Create Fix Release
+run-name: Фиксрелиз ${{ github.run_number }} к релизу ${{ github.event.inputs.release_version }} (запущено ${{ github.actor }})
 
-on: ['workflow_dispatch']
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Версия релиза'
+        required: true
 
 env:
   RELEASE_VERSION: ${{ github.run_number }}
+  FIX_RELEASE_VERSION: ${{ github.event.inputs.release_version }}
   IMAGE_NAME: cr.yandex/${{ vars.DOCKER_REGISTRY_ID }}/app
+  BRANCH_NAME: release/${{ github.event.inputs.release_version }}
 
 jobs:
-  create-issue:
+  add-issue-comment:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -20,19 +27,21 @@ jobs:
       - name: Create issue
         run: |
           git fetch
-          node ./scripts/createIssue.mjs
+          node ./scripts/addIssueComment.mjs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
           DOCKER_REGISTRY_ID: ${{ vars.DOCKER_REGISTRY_ID }}
           AUTHOR: ${{ github.actor }}
-  create-release-branch:
+  update-changelog-and-create-tag:
     needs:
-      - create-issue
+      - add-issue-comment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -41,31 +50,32 @@ jobs:
         run: |
           git config --global user.email "cergmin@yandex.ru"
           git config --global user.name "CI Bot"
+      - name: Update tag
+        run: |
+          git tag --force v${{ env.RELEASE_VERSION }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Update CHANGELOG
         run: |
           git fetch
+          git checkout -b main origin/main
+          git checkout ${{ env.BRANCH_NAME }}
+          git restore --source main -- CHANGELOG.md
           node ./scripts/updateChangelog.mjs
           git add CHANGELOG.md
-          git commit -m "Update CHANGELOG for release v${{ env.RELEASE_VERSION }}"
+          git commit -m "Temp commit to save changelog"
+          git checkout main
+          git restore --source ${{ env.BRANCH_NAME }} -- CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m "Update CHANGELOG for fixrelease ${{ env.FIX_RELEASE_VERSION }} to release ${{ env.RELEASE_VERSION }}"
           git push
         env:
           RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
           AUTHOR: ${{ github.actor }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create new tag
-        run: |
-          git tag v${{ env.RELEASE_VERSION }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create branch
-        run: |
-          git checkout -b release/${{ env.RELEASE_VERSION }}
-          git push --set-upstream origin --tags
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   create-docker-image:
     runs-on: ubuntu-latest
-    needs: create-release-branch
+    needs: update-changelog-and-create-tag
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -80,15 +90,15 @@ jobs:
           docker login --username oauth --password ${{ secrets.DOCKER_OAUTH_TOKEN }} cr.yandex
       - name: Build Docker image
         run: |
-          docker build . -t ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }} ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}_latest
+          docker build . -t ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}_fix_${{ env.FIX_RELEASE_VERSION }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}_fix_${{ env.FIX_RELEASE_VERSION }} ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}_latest
       - name: Push Docker image
         run: |
-          docker push ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}
+          docker push ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}_fix_${{ env.FIX_RELEASE_VERSION }}
           docker push ${{ env.IMAGE_NAME }}:${{ env.RELEASE_VERSION }}_latest
   lint:
     needs: 
-      - create-release-branch
+      - update-changelog-and-create-tag
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -103,7 +113,7 @@ jobs:
         run: npm run lint
   test:
     needs: 
-      - create-release-branch
+      - update-changelog-and-create-tag
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

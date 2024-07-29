@@ -26,9 +26,9 @@ const createIssue = () => {
       Date: new Date().toLocaleDateString('ru'),
       Author: `@${AUTHOR}`,
       Version: RELEASE_VERSION,
-      Commits: '<br>' + getChangesList().replaceAll('\n', '<br>'),
       'Docker Image': `cr.yandex/${DOCKER_REGISTRY_ID}/app:${RELEASE_VERSION}`,
       'Latest Docker Image': `cr.yandex/${DOCKER_REGISTRY_ID}/app:${RELEASE_VERSION}_latest`,
+      Commits: '<br>' + getChangesList().replaceAll('\n', '<br>'),
     })
     .map(([key, value]) => `**${key}**: ${value}`)
     .join('<br>');
