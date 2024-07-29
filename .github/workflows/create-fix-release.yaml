@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -53,7 +55,7 @@ jobs:
       - name: Update tag
         run: |
           git tag --force v${{ env.RELEASE_VERSION }}
-          git push --force --tags
+          git push --tags
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Update CHANGELOG
