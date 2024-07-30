@@ -1,3 +1,6 @@
+## Release 25
+1ba06a2 Update deploy flow\
+
 ## Release 23
 3347c9c Update changelog generation for fix release\
 8873d99 Update changelog generation\
