@@ -11,13 +11,13 @@ const getIssueNumber = () => {
   return issues[0]?.number;
 };
 
-const addIssueComment = (issueNumber) => {
+const addFixReleaseIssueComment = (issueNumber) => {
   const body = Object
     .entries({
       Date: new Date().toLocaleDateString('ru'),
       Author: `@${AUTHOR}`,
       'Docker Image': `cr.yandex/${DOCKER_REGISTRY_ID}/app:${RELEASE_VERSION}`,
-      Commits: '<br>' + getChangesList().replaceAll('\n', '<br>'),
+      Commits: '<br>' + getChangesList({betweenLastTagAndHead: true}).replaceAll('\n', '<br>'),
     })
     .map(([key, value]) => `**${key}**: ${value}`)
     .join('<br>');
@@ -30,4 +30,4 @@ const addIssueComment = (issueNumber) => {
   execSync(command.join(' '));
 };
 
-addIssueComment(getIssueNumber());
+addFixReleaseIssueComment(getIssueNumber());

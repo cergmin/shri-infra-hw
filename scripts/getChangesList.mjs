@@ -15,14 +15,16 @@ const getTagsList = () => {
     .sort(compareVersions);
 };
 
-export const getChangesList = () => {
+export const getChangesList = ({betweenLastTagAndHead} = {betweenLastTagAndHead: false}) => {
   const [lastTag, prevTag] = getTagsList();
 
-  return execSync(`git log v${prevTag}..v${lastTag} --oneline`)
+  return execSync(
+    betweenLastTagAndHead
+      ? `git log v${lastTag}..HEAD --oneline`
+      : `git log v${prevTag}..v${lastTag} --oneline`
+  )
     .toString()
     .split('\n')
     .filter((line) => !line.includes('Update CHANGELOG'))
     .join('\n');
 };
-
-console.log(getChangesList());
