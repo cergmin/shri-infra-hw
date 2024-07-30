@@ -1,3 +1,12 @@
+## Release 23
+8873d99 Update changelog generation\
+900d1a2 Fix main feth in fix-release flow\
+f43c60a Fix tags push in fix release flow\
+759e130 Fix fetch-depth in fix release flow\
+f346570 Remove 123456 from README\
+813e033 Add 456 to README\
+03811e6 Add 123 to README\
+
 ## Release 22
 
 ## Release 21
