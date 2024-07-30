@@ -28,7 +28,7 @@ jobs:
           node-version: 18
       - name: Create issue
         run: |
-          git fetch
+          git fetch --tags
           node ./scripts/addIssueComment.mjs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -60,7 +60,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Update CHANGELOG
         run: |
-          git fetch
+          git fetch --tags
           git checkout -b main origin/main
           git checkout ${{ env.BRANCH_NAME }}
           git restore --source main -- CHANGELOG.md

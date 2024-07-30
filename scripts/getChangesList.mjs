@@ -21,3 +21,5 @@ export const getChangesList = () => {
   return execSync(`git log v${lastTag}..HEAD --oneline`)
     .toString();
 };
+
+console.log(getChangesList());
