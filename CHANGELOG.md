@@ -1,3 +1,7 @@
+## Release 26
+95bcab3 Add 456 to README\
+49218dc Add 123 to README\
+
 ## Release 25
 1ba06a2 Update deploy flow\
 
