@@ -1,7 +1,4 @@
 ## Release 22
-b8b7acf Fix fetch depth for CI\
-9b72f2c Remove 123 from README\
-5e0651f Update CHANGELOG for release v21\
 
 ## Release 21
 d3b6fe9 Add 123 to README\
