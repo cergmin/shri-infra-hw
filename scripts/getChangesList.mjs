@@ -18,6 +18,11 @@ const getTagsList = () => {
 export const getChangesList = () => {
   const lastTag = getTagsList()[0];
 
-  return execSync(`git log v${lastTag}..HEAD --oneline`)
-    .toString();
+  console.log(`git log v${lastTag}..HEAD --oneline`);
+
+  const changesList = execSync(`git log v${lastTag}..HEAD --oneline`).toString();
+
+  console.log(`Changes list:\n${changesList}`)
+
+  return changesList;
 };
