@@ -1,0 +1,30 @@
+name: Deploy
+run-name: Выкатка релиза ${{ github.event.inputs.release_version }} (запущено ${{ github.actor }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Версия релиза'
+        required: true
+
+env:
+  RELEASE_VERSION: ${{ github.event.inputs.release_version }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auth SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/secret_key
+          chmod 600 ~/.ssh/secret_key
+          ssh-keyscan -H ${{ vars.SSH_HOST }} >> ~/.ssh/known_hosts
+      - name: Deploy
+        run: |
+          ssh -i ~/.ssh/secret_key ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} "sudo docker rm -f ${{ vars.DOCKER_REGISTRY_ID }} && sudo docker run --name ${{ vars.DOCKER_REGISTRY_ID }} -d -p 3000:3000 cr.yandex/${{ vars.DOCKER_REGISTRY_ID }}/app:${{ env.RELEASE_VERSION }}_latest"
+
+# ssh -i ~/.ssh/secret_key ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }}
+# sudo docker rm -f ${{ vars.DOCKER_REGISTRY_ID }}
+# sudo docker run --name ${{ vars.DOCKER_REGISTRY_ID }} -d -p 3000:3000 cr.yandex/${{ vars.DOCKER_REGISTRY_ID }}/app:${{ env.RELEASE_VERSION }}_latest
