@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: 18
       - name: Create issue
-        run: node ./scripts/addFixReleaseIssueComment.mjs
+        run: node ./scripts/addFixReleaseComment.mjs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ env.RELEASE_VERSION }}

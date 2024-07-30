@@ -24,7 +24,22 @@ jobs:
       - name: Deploy
         run: |
           ssh -i ~/.ssh/secret_key ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} "sudo docker rm -f ${{ vars.DOCKER_REGISTRY_ID }} && sudo docker run --name ${{ vars.DOCKER_REGISTRY_ID }} -d -p 3000:3000 cr.yandex/${{ vars.DOCKER_REGISTRY_ID }}/app:${{ env.RELEASE_VERSION }}_latest"
-
 # ssh -i ~/.ssh/secret_key ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }}
 # sudo docker rm -f ${{ vars.DOCKER_REGISTRY_ID }}
 # sudo docker run --name ${{ vars.DOCKER_REGISTRY_ID }} -d -p 3000:3000 cr.yandex/${{ vars.DOCKER_REGISTRY_ID }}/app:${{ env.RELEASE_VERSION }}_latest
+  add-issue-comment:
+    runs-on: ubuntu-latest
+    needs:
+      - deploy
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Create issue
+        run: node ./scripts/addDeployComment.mjs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
