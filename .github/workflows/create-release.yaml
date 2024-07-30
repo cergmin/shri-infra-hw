@@ -52,15 +52,16 @@ jobs:
           RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
           AUTHOR: ${{ github.actor }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create new tag
-        run: |
-          git tag v${{ env.RELEASE_VERSION }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create branch
         run: |
           git checkout -b release/${{ env.RELEASE_VERSION }}
+          git reset --hard HEAD~1
           git push --set-upstream origin release/${{ env.RELEASE_VERSION }} --tags
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create new tag
+        run: |
+          git tag v${{ env.RELEASE_VERSION }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   create-docker-image:
