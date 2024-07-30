@@ -59,6 +59,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Update CHANGELOG
         run: |
+          git fetch --tags
+          git checkout -b main origin/main
+          git checkout ${{ env.BRANCH_NAME }}
           git restore --source main -- CHANGELOG.md
           node ./scripts/updateChangelog.mjs
           git add CHANGELOG.md
