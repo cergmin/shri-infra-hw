@@ -11,7 +11,7 @@ const getIssueNumber = () => {
   return issues[0]?.number;
 };
 
-const addFixReleaseIssueComment = (issueNumber) => {
+const addFixReleaseComment = (issueNumber) => {
   const body = Object
     .entries({
       Date: new Date().toLocaleDateString('ru'),
@@ -30,4 +30,4 @@ const addFixReleaseIssueComment = (issueNumber) => {
   execSync(command.join(' '));
 };
 
-addFixReleaseIssueComment(getIssueNumber());
+addFixReleaseComment(getIssueNumber());
