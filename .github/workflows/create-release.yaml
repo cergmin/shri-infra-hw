@@ -19,7 +19,7 @@ jobs:
           node-version: 18
       - name: Create issue
         run: |
-          git fetch --tags
+          git pull --tags
           node ./scripts/createIssue.mjs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -43,7 +43,7 @@ jobs:
           git config --global user.name "CI Bot"
       - name: Update CHANGELOG
         run: |
-          git fetch --tags
+          git pull --tags
           node ./scripts/updateChangelog.mjs
           git add CHANGELOG.md
           git commit -m "Update CHANGELOG for release v${{ env.RELEASE_VERSION }}"
