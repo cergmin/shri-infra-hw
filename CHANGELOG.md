@@ -1,4 +1,5 @@
 ## Release 23
+3347c9c Update changelog generation for fix release\
 8873d99 Update changelog generation\
 900d1a2 Fix main feth in fix-release flow\
 f43c60a Fix tags push in fix release flow\
