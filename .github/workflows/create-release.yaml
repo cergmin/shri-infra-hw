@@ -8,8 +8,21 @@ env:
   IMAGE_NAME: cr.yandex/${{ vars.DOCKER_REGISTRY_ID }}/app
 
 jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Create new tag
+        run: |
+          git tag v${{ env.RELEASE_VERSION }}
+          git push --tags
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   create-issue:
     runs-on: ubuntu-latest
+    needs: 
+      - create-tag
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,7 +41,7 @@ jobs:
           AUTHOR: ${{ github.actor }}
   create-release-branch:
     needs:
-      - create-issue
+      - create-tag
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -57,13 +70,7 @@ jobs:
         run: |
           git checkout -b release/${{ env.RELEASE_VERSION }}
           git reset --hard HEAD~1
-          git push --set-upstream origin release/${{ env.RELEASE_VERSION }} --tags
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create new tag
-        run: |
-          git tag v${{ env.RELEASE_VERSION }}
-          git push --tags
+          git push --set-upstream origin release/${{ env.RELEASE_VERSION }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   create-docker-image:

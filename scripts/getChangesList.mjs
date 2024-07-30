@@ -16,13 +16,13 @@ const getTagsList = () => {
 };
 
 export const getChangesList = () => {
-  const lastTag = getTagsList()[0];
+  const [lastTag, prevTag] = getTagsList();
 
-  console.log(`git log v${lastTag}..HEAD --oneline`);
-
-  const changesList = execSync(`git log v${lastTag}..HEAD --oneline`).toString();
-
-  console.log(`Changes list:\n${changesList}`)
-
-  return changesList;
+  return execSync(`git log v${prevTag}..v${lastTag} --oneline`)
+    .toString()
+    .split('\n')
+    .filter((line) => !line.includes('Update CHANGELOG'))
+    .join('\n');
 };
+
+console.log(getChangesList());
